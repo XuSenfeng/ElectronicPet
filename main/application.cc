@@ -80,6 +80,7 @@ void Application::CheckNewVersion() {
         retry_count = 0;
 
         if (ota_.HasNewVersion()) {
+#if 0
             Alert(Lang::Strings::OTA_UPGRADE, Lang::Strings::UPGRADING, "happy", Lang::Sounds::P3_UPGRADE);
             // Wait for the chat state to be idle
             do {
@@ -126,10 +127,11 @@ void Application::CheckNewVersion() {
             });
 
             return;
+#endif
         }
 
         // No new version, mark the current version as valid
-        ota_.MarkCurrentVersionValid();
+        // ota_.MarkCurrentVersionValid();
         std::string message = std::string(Lang::Strings::VERSION) + ota_.GetCurrentVersion();
         display->ShowNotification(message.c_str());
     
