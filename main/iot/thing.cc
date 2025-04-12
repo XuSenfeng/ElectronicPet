@@ -1,3 +1,9 @@
+/*
+ * @Descripttion: 
+ * @Author: Xvsenfeng helloworldjiao@163.com
+ * @LastEditors: Xvsenfeng helloworldjiao@163.com
+ * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
+ */
 #include "thing.h"
 #include "application.h"
 
@@ -68,7 +74,7 @@ void Thing::Invoke(const cJSON* command) {
             method.Invoke();
         });
     } catch (const std::runtime_error& e) {
-        ESP_LOGE(TAG, "Method not found: %s", method_name->valuestring);
+        ESP_LOGE(TAG, "%s's Method not found: %s", name_.c_str(), method_name->valuestring);
         return;
     }
 }
