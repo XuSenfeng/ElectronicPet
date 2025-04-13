@@ -15,6 +15,7 @@
 #include <cJSON.h>
 #include <driver/gpio.h>
 #include <arpa/inet.h>
+#include "electronic_pet.h"
 
 #define TAG "Application"
 
@@ -152,9 +153,10 @@ void Application::CheckNewVersion() {
 
         SetDeviceState(kDeviceStateIdle);
         display->SetChatMessage("system", "");
-        ResetDecoder();
-        PlaySound(Lang::Sounds::P3_SUCCESS);
+        // ResetDecoder();
+        // PlaySound(Lang::Sounds::P3_SUCCESS);
         // Exit the loop if upgrade or idle
+        my_pet = new ElectronicPet();
         break;
     }
 }

@@ -18,6 +18,8 @@
 #include "ota.h"
 #include "background_task.h"
 
+#include "electronic_pet.h"
+
 #if CONFIG_USE_WAKE_WORD_DETECT
 #include "wake_word_detect.h"
 #endif
@@ -70,6 +72,7 @@ public:
     void WakeWordInvoke(const std::string& wake_word);
     void PlaySound(const std::string_view& sound);
     bool CanEnterSleepMode();
+    ElectronicPet* GetMyPet() { return my_pet; }
 
 private:
     Application();
@@ -113,6 +116,7 @@ private:
     OpusResampler reference_resampler_;
     OpusResampler output_resampler_;
 
+    std::atomic<ElectronicPet *> my_pet;
     void MainLoop();
     void OnAudioInput();
     void OnAudioOutput();
