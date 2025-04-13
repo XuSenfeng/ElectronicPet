@@ -9,12 +9,14 @@
 #include <esp_timer.h>
 #include <atomic>
 class ElectronicPet {
+private:
     std::mutex mutex_;
-public:
     int vigor;      // 精神状态
     int satiety;    // 饱食度
     int happiness;  // 快乐度
-    int clock_ticks_;
+    int clock_ticks_;  // 时钟
+public:
+
     static ElectronicPet* MyPet;
 
     esp_timer_handle_t electromic_prt_timer_ = nullptr;

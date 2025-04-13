@@ -1,3 +1,9 @@
+/*
+ * @Descripttion: 
+ * @Author: Xvsenfeng helloworldjiao@163.com
+ * @LastEditors: Xvsenfeng helloworldjiao@163.com
+ * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
+ */
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
@@ -30,13 +36,13 @@ public:
 
     inline int width() const { return width_; }
     inline int height() const { return height_; }
-
+    lv_display_t *display_ = nullptr;
 protected:
     int width_ = 0;
     int height_ = 0;
     
     esp_pm_lock_handle_t pm_lock_ = nullptr;
-    lv_display_t *display_ = nullptr;
+    
 
     lv_obj_t *emotion_label_ = nullptr;
     lv_obj_t *network_label_ = nullptr;
