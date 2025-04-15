@@ -1,3 +1,9 @@
+/*
+ * @Descripttion: 
+ * @Author: Xvsenfeng helloworldjiao@163.com
+ * @LastEditors: Xvsenfeng helloworldjiao@163.com
+ * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
+ */
 #include <esp_log.h>
 #include <esp_err.h>
 #include <string>
@@ -253,7 +259,16 @@ void Display::SetChatMessage(const char* role, const char* content) {
     if (chat_message_label_ == nullptr) {
         return;
     }
-    lv_label_set_text(chat_message_label_, content);
+    //避免出现空的消息框
+    if(strlen(content) == 0){
+        lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    lv_obj_clear_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN);
+    // Create a message bubble
+    char temp_buf[256];
+    sprintf(temp_buf, "\n%s", content);
+    lv_label_set_text(chat_message_label_, temp_buf);
 }
 
 void Display::SetTheme(const std::string& theme_name) {

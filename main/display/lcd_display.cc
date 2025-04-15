@@ -536,6 +536,39 @@ void LcdDisplay::SetChatMessage(const char* role, const char* content) {
     chat_message_label_ = msg_text;
 }
 #else
+static void generate_mask(lv_draw_buf_t * mask)
+{
+    /*Create a "8 bit alpha" canvas and clear it*/
+    lv_obj_t * canvas = lv_canvas_create(lv_screen_active());
+    lv_canvas_set_draw_buf(canvas, mask);
+    lv_canvas_fill_bg(canvas, lv_color_white(), LV_OPA_TRANSP);
+
+    lv_layer_t layer;
+    lv_canvas_init_layer(canvas, &layer);
+
+    /*Draw a label to the canvas. The result "image" will be used as mask*/
+    lv_draw_rect_dsc_t rect_dsc;
+    lv_draw_rect_dsc_init(&rect_dsc);
+    rect_dsc.bg_grad.dir = LV_GRAD_DIR_VER;
+    rect_dsc.bg_grad.stops[0].color = lv_color_black();
+    rect_dsc.bg_grad.stops[1].color = lv_color_white();
+    rect_dsc.bg_grad.stops[0].opa = LV_OPA_COVER;
+    rect_dsc.bg_grad.stops[1].opa = LV_OPA_COVER;
+    lv_area_t a = {0, 0, mask->header.w - 1, mask->header.h / 2 - 10};
+    lv_draw_rect(&layer, &rect_dsc, &a);
+
+    a.y1 = mask->header.h / 2 + 10;
+    a.y2 = mask->header.h - 1;
+    rect_dsc.bg_grad.stops[0].color = lv_color_white();
+    rect_dsc.bg_grad.stops[1].color = lv_color_black();
+    lv_draw_rect(&layer, &rect_dsc, &a);
+
+    lv_canvas_finish_layer(canvas, &layer);
+
+    /*Comment it to make the mask visible*/
+    lv_obj_delete(canvas);
+}
+
 void LcdDisplay::SetupUI() {
     DisplayLockGuard lock(this);
 
@@ -582,10 +615,14 @@ void LcdDisplay::SetupUI() {
     chat_message_label_ = lv_label_create(content_);
     lv_label_set_text(chat_message_label_, "");
     lv_obj_set_width(chat_message_label_, LV_HOR_RES * 0.9); // 限制宽度为屏幕宽度的 90%
-    lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_WRAP); // 设置为自动换行模式
-    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_CENTER, 0); // 设置文本居中对齐
-    lv_obj_set_style_text_color(chat_message_label_, current_theme.text, 0);
-
+    lv_obj_set_height(chat_message_label_, fonts_.text_font->line_height * 3); // 限制高度为字体高度的 2 倍
+    lv_label_set_long_mode(chat_message_label_, LV_LABEL_LONG_SCROLL_CIRCULAR); // 设置为自动换行模式
+    lv_obj_set_style_text_color(chat_message_label_, LIGHT_THEME.text, 0);
+    lv_obj_set_style_bg_color(chat_message_label_, lv_color_hex3(0x0099FF), 0);
+    lv_obj_set_style_radius(chat_message_label_, 10, 0);
+    lv_obj_set_style_bg_opa(chat_message_label_, 255, 0);
+    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_AUTO, 0); // 设置文本居中对齐
+    lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN); // 启用滚动以适应文本
     /* Status bar */
     lv_obj_set_flex_flow(status_bar_, LV_FLEX_FLOW_ROW);
     lv_obj_set_style_pad_all(status_bar_, 0, 0);
@@ -633,6 +670,12 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_text_color(low_battery_label_, lv_color_white(), 0);
     lv_obj_center(low_battery_label_);
     lv_obj_add_flag(low_battery_popup_, LV_OBJ_FLAG_HIDDEN);
+
+    LV_DRAW_BUF_DEFINE_STATIC(mask, 288, 60, LV_COLOR_FORMAT_L8);
+    LV_DRAW_BUF_INIT_STATIC(mask);
+
+    generate_mask(&mask);
+    lv_obj_set_style_bitmap_mask_src(chat_message_label_, &mask, 0);
 }
 #endif
 
