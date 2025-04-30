@@ -815,3 +815,30 @@ bool Application::CanEnterSleepMode() {
     // Now it is safe to enter sleep mode
     return true;
 }
+
+
+void Application::SendMessage(const std::string& message) {
+    if (device_state_ == kDeviceStateIdle) {
+        ToggleChatState();
+        Schedule([this, message]() {
+            if (protocol_) {
+                protocol_->SendWakeWordDetected(message); 
+            }
+        }); 
+    } else if (device_state_ == kDeviceStateSpeaking) {
+        Schedule([this, message]() {
+            AbortSpeaking(kAbortReasonNone);
+            if (protocol_) {
+                protocol_->SendWakeWordDetected(message); 
+            }
+        });
+    } else if (device_state_ == kDeviceStateListening) {   
+        Schedule([this, message]() {
+            if (protocol_) {
+                protocol_->CloseAudioChannel();
+                protocol_->SendWakeWordDetected(message); 
+            }
+        });
+    }
+
+}

@@ -73,7 +73,7 @@ public:
     void PlaySound(const std::string_view& sound);
     bool CanEnterSleepMode();
     ElectronicPet* GetMyPet() { return my_pet; }
-
+    void SendMessage(const std::string& message);
 private:
     Application();
     ~Application();

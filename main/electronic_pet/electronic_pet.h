@@ -23,6 +23,7 @@ typedef struct {
 typedef struct{
     time_t trigger_time;
     e_pet_timer_type_e type;
+    int repeat_time;
     union {
         e_pet_timer_function function;
         char *message;
@@ -32,7 +33,7 @@ typedef struct{
 class ElectronicPet {
 private:
     std::mutex mutex_;
-    int vigor;      // 精神状态
+    int vigor_;      // 精神状态
     int satiety;    // 饱食度
     int happiness;  // 快乐度
     int clock_ticks_;  // 时钟
@@ -45,11 +46,16 @@ public:
     ElectronicPet();
     ~ElectronicPet();
 
-    ElectronicPet* GetInstance();
+    static ElectronicPet* GetInstance();
 
     void OnClockTimer();
     void timer_event_sort();
-    void timer_add_timer_event_relative(int seconds, e_pet_timer_type_e type, void (*callback)(void*), void* arg);
-    void timer_add_timer_event_absolute(time_t trigger_time, e_pet_timer_type_e type, void (*callback)(void*), void* arg);
+    void timer_add_timer_event_relative(int seconds, e_pet_timer_type_e type, void (*callback)(void*), void* arg, bool repeat);
+    void timer_add_timer_event_absolute(time_t trigger_time, e_pet_timer_type_e type, void (*callback)(void*), void* arg, bool repeat);
+    void timer_add_timer_event_repeat(time_t trigger_time, e_pet_timer_type_e type, void (*callback)(void*), void* arg, int repeat_time);
     void timer_event_process();
+
+    void vigor_add(int vigor);
+    void satiety_add(int satiety);
+    void happiness_add(int happiness);
 };
