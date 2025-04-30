@@ -19,8 +19,8 @@ ElectronicPet::ElectronicPet(){
     // timer_add_timer_event_relative(10, E_PET_TIMER_FUNCTION, [](void* arg) {
     //     ESP_LOGI(TAG, "Function callback triggered!");
     // }, NULL, 0);
-    time_t time_n = time(nullptr);
-    timer.timer_add_timer_event_repeat(time_n + 5, E_PET_TIMER_MESSAGE, NULL, (void*)"Hello from timer event!", 10);
+    // time_t time_n = time(nullptr);
+    // timer.timer_add_timer_event_repeat(time_n + 5, E_PET_TIMER_MESSAGE, NULL, (void*)"Hello from timer event!", 10);
 }
 
 ElectronicPet::~ElectronicPet(){

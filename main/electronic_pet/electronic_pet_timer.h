@@ -25,6 +25,20 @@ typedef struct{
     };
 }e_pet_timer_event_t;
 
+typedef struct{
+    int tm_sec; // 秒
+    int tm_min; // 分
+    int tm_hour; // 时
+    int re_mday; // 日
+    int re_mon; // 月
+    int re_year; // 年
+    int re_wday; // 星期几
+    int random_l;
+    int random_h;
+    int function_id;
+    char message[100];
+}csv_info_t;
+
 class ElectronicPetTimer {
 private:
     int clock_ticks_;  // 时钟
@@ -34,10 +48,21 @@ private:
 public:
     ElectronicPetTimer();
     ~ElectronicPetTimer();
+    void timer_read_csv_timer();
     void OnClockTimer();
     void timer_event_sort();
     void timer_add_timer_event_relative(int seconds, e_pet_timer_type_e type, void (*callback)(void*), void* arg, bool repeat);
     void timer_add_timer_event_absolute(time_t trigger_time, e_pet_timer_type_e type, void (*callback)(void*), void* arg, bool repeat);
     void timer_add_timer_event_repeat(time_t trigger_time, e_pet_timer_type_e type, void (*callback)(void*), void* arg, int repeat_time);
+    void deal_one_csv_message(csv_info_t *csv_info, long *delta_sec, long *interval_sec);
     void timer_event_process();
 };
+
+
+#define SECOND_ONE_SECOND 1 
+#define SECOND_ONE_MINUTE 60
+#define SECOND_ONE_HOUR 3600
+#define SECOND_ONE_DAY 86400
+#define SECOND_ONE_WEEK 604800
+#define SECOND_ONE_MONTH 2592000
+#define SECOND_ONE_YEAR 31536000

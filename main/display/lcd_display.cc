@@ -345,7 +345,7 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_bg_color(chat_message_label_, lv_color_hex3(0x0099FF), 0);
     lv_obj_set_style_radius(chat_message_label_, 10, 0);
     lv_obj_set_style_bg_opa(chat_message_label_, 255, 0);
-    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_AUTO, 0); // 设置文本居中对齐
+    lv_obj_set_style_text_align(chat_message_label_, LV_TEXT_ALIGN_CENTER, 0); // 设置文本居中对齐
     lv_obj_add_flag(chat_message_label_, LV_OBJ_FLAG_HIDDEN); // 启用滚动以适应文本
     /* Status bar */
     lv_obj_set_flex_flow(status_bar_, LV_FLEX_FLOW_ROW);

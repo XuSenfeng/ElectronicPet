@@ -18,6 +18,7 @@
 #include "esp_vfs_fat.h"
 #include "sdmmc_cmd.h"
 #include "driver/sdmmc_host.h"
+#include <string.h>
 
 #define TAG "LichuangDevBoard"
 
@@ -219,9 +220,7 @@ private:
             return;
         }
         ESP_LOGI(TAG, "Filesystem mounted"); // 提示挂载成功
-        printf("----------------------\n");
         sdmmc_card_print_info(stdout, card); // 终端打印SD卡的一些信息
-        printf("----------------------\n");
     }
 
     // 物联网初始化，添加对 AI 可见设备
