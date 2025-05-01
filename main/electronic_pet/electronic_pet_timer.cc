@@ -37,6 +37,19 @@ long lcm(long a, long b) {
     return (a * b) / gcd(a, b);
 }
 
+// 辅助函数：判断闰年
+int is_leap_year(int year) {
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+}
+
+// 辅助函数：获取指定月份的天数
+int get_month_days(int year, int month) {
+    static const int days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    if (month == 1 && is_leap_year(year)) 
+        return 29;
+    return days[month];
+}
+
 void calculate_next_trigger(
     int tm_sec, int tm_min, int tm_hour,
     int re_mday, int re_mon, int re_year,
@@ -57,10 +70,10 @@ void calculate_next_trigger(
 
     // 修正后的宏定义：增加参数分离字段名和变量名
     #define PROCESS_FIELD(field_suffix, var, max, unit_sec) \
-        if (var < 0) { \
+        if (!has_periodic &&  var < 0) { \
             interval = lcm(interval, labs(var) * (unit_sec)); \
             has_periodic = 1; \
-        } else if (var >= 0 && var <= max) { \
+        } else if (!has_periodic && var >= 0 && var <= max) { \
             next.tm_##field_suffix = var; \
         }
 
@@ -69,43 +82,86 @@ void calculate_next_trigger(
     PROCESS_FIELD(min, tm_min, 59, 60)
     PROCESS_FIELD(hour, tm_hour, 23, 3600)
 
+    if (re_wday != 0) { // 0表示不设置星期条件
+        // 转换输入范围：0-7 → 0-6（周日=0）
+        int target_wday = (re_wday < 0) ? labs(re_wday) % 7 : re_wday % 7;
+        
+        // 处理周期性（负数表示周期）
+        if (re_wday < 0) {
+            // 计算周周期（绝对值×7天的秒数）
+            long week_interval = 604800L; 
+            interval = lcm(interval, week_interval);
+            has_periodic = 1;
+            
+            // 设置初始触发日为下一个目标星期几
+            int days_to_add = (target_wday - next.tm_wday + 7) % 7;
+            days_to_add = (days_to_add == 0) ? 7 : days_to_add; // 确保至少增加1天
+            next.tm_mday += days_to_add;
+        } 
+        // 处理单次指定（正数）
+        else if (re_wday > 0) {
+            // 计算需要增加的天数（考虑跨周情况）
+            int days_diff = (target_wday - next.tm_wday + 7) % 7;
+            // 如果当天已过目标星期几，则跳到下周
+            if (days_diff == 0 && mktime(&next) <= now) {
+                days_diff = 7;
+            }
+            next.tm_mday += days_diff;
+        }
+        
+    }
+
     // 处理日期字段
-    if (re_mday < 0) {
+    if (!has_periodic &&  re_mday < 0) {
         interval = lcm(interval, labs(re_mday) * 86400L);
         has_periodic = 1;
-    } else if (re_mday > 0) {
+    } else if (!has_periodic &&  re_mday > 0) {
+        printf("Setting day of month: %d\n", re_mday);
         next.tm_mday = re_mday;
     }
 
-    if (re_mon < 0) {
-        interval = lcm(interval, labs(re_mon) * 2592000L); // 近似30天
+    if (!has_periodic &&  re_mon < 0) { // 月周期处理
+        if(mktime(&next) < now) {
+            next.tm_mon += labs(re_mon);
+        }
+
+        int year = next.tm_year + 1900 + next.tm_mon / 12;
+        int month = next.tm_mon % 12;
+
+        interval = lcm(interval, labs(re_mon) * get_month_days(year, month) *86400L); // 近似值
+        // 调整日期到有效值
+
+        int max_day = get_month_days(year, month);
+        if (next.tm_mday > max_day)
+            next.tm_mday = max_day;
         has_periodic = 1;
-    } else if (re_mon > 0) {
+    } else if (!has_periodic &&  re_mon > 0) {
         next.tm_mon = re_mon - 1;
     }
 
-    if (re_year < 0) {
-        interval = lcm(interval, labs(re_year) * 31536000L); // 近似365天
+    if (!has_periodic &&  re_year < 0) { // 年周期处理
+        int year = next.tm_year + 1900;
+        interval = lcm(interval, labs(re_year) * (is_leap_year(year) ? 366 : 365) * 86400L); // 365.25天
+        if(mktime(&next) < now) {
+            next.tm_year += labs(re_year);
+        }
+        // 闰年调整
+        if (next.tm_mon == 1) { // 二月
+            int max_day = is_leap_year(year) ? 29 : 28;
+            if (next.tm_mday > max_day)
+                next.tm_mday = max_day;
+        }
         has_periodic = 1;
-    } else if (re_year > 0) {
+    } else if (!has_periodic &&  re_year > 0) {
         next.tm_year = re_year - 1900;
-    }
-
-    // 处理星期字段
-    if (re_wday < 0) {
-        interval = lcm(interval, labs(re_wday) * 604800L);
-        has_periodic = 1;
-    } else if (re_wday >= 0 && re_wday <= 7) {
-        next.tm_wday = re_wday % 7;
     }
 
     // 计算初始候选时间
     next.tm_isdst = -1;
-    printf("Next trigger time: %02d:%02d:%02d %02d/%02d/%04d\n",
+    time_t candidate = mktime(&next);
+    printf("Next time (local): %02d:%02d:%02d %02d/%02d/%04d\n",
            next.tm_hour, next.tm_min, next.tm_sec,
            next.tm_mday, next.tm_mon + 1, next.tm_year + 1900);
-    time_t candidate = mktime(&next);
-
     // 自动调整策略
     while (1) {
         // 处理时间已过的情况
@@ -113,6 +169,7 @@ void calculate_next_trigger(
             // printf("Candidate time has passed, adjusting...\n");
             if (has_periodic) {
                 candidate += interval;
+                printf("Adjusted candidate time: %lld %lld\n", candidate, now);
             } else {
                 // 单次事件已过期
                 *delta_sec = -1;
@@ -123,6 +180,12 @@ void calculate_next_trigger(
         }
         break;
     }
+
+    struct tm* candidate_tm = localtime(&candidate);
+    // 处理时区差异
+    printf("Candidate time (local): %02d:%02d:%02d %02d/%02d/%04d  day:%ld\n hour: %ld, min: %ld, sec: %ld\n",
+           candidate_tm->tm_hour, candidate_tm->tm_min, candidate_tm->tm_sec,
+           candidate_tm->tm_mday, candidate_tm->tm_mon + 1, candidate_tm->tm_year + 1900, interval / 60 /60 / 24, interval / 60 /60, interval / 60, interval);
 
     *delta_sec = candidate - now;
     *interval_sec = has_periodic ? interval : 0;
