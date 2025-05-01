@@ -1,3 +1,9 @@
+/*
+ * @Descripttion: 
+ * @Author: Xvsenfeng helloworldjiao@163.com
+ * @LastEditors: Xvsenfeng helloworldjiao@163.com
+ * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
+ */
 #pragma once
 
 #include "time.h"
@@ -38,6 +44,8 @@ typedef struct{
     int function_id;
     char message[100];
 }csv_info_t;
+
+
 
 class ElectronicPetTimer {
 private:

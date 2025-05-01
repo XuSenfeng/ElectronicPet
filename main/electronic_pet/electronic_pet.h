@@ -14,15 +14,35 @@
 
 #include <atomic>
 #include <string>
+#include "electronic_food.h"
 #include "electronic_pet_timer.h"
+#include <vector>
+typedef enum{
+    E_PET_ACTION_IDLE = 0, // 空闲
+    E_PET_ACTION_PLAY, // 玩耍
+    E_PET_ACTION_SLEEP, // 睡觉
+    E_PET_ACTION_WALK, // 散步
+    E_PET_ACTION_BATH, // 洗澡
+    E_PET_ACTION_WORK, // 工作
+    E_PET_ACTION_STUDY, // 学习
+    E_PET_ACTION_PLAY_MUSIC, // 听音乐
+    E_PET_ACTION_NUMBER // 状态数量
+}electronic_pet_action_e;
+
+typedef enum{
+    E_PET_STATE_VIGIR = 0, // 精神状态
+    E_PET_STATE_SATITY, // 饱食度
+    E_PET_STATE_HAPPINESS, // 快乐度
+    E_PET_STATE_NUMBER // 状态数量
+}electronic_pet_state_e;
+
 
 class ElectronicPet {
 private:
     std::mutex mutex_;
-    int vigor_;      // 精神状态
-    int satiety;    // 饱食度
-    int happiness;  // 快乐度
-    
+    int state_[E_PET_STATE_NUMBER];     // 当前状态
+    static int state_time_change_[E_PET_ACTION_NUMBER][E_PET_STATE_NUMBER]; // 不同状态下边宠物的状态变化
+    std::vector<Food> foods_; // 物品列表
 public:
     ElectronicPetTimer timer;
     static ElectronicPet* MyPet;
@@ -31,9 +51,5 @@ public:
     
     static ElectronicPet* GetInstance();
 
-
-
-    void vigor_add(int vigor);
-    void satiety_add(int satiety);
-    void happiness_add(int happiness);
+    void change_statue(int *change_state);
 };

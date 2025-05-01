@@ -10,7 +10,7 @@
  * @LastEditors: Xvsenfeng helloworldjiao@163.com
  * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
  */
-
+#pragma once
 #include <string>
 #include "lvgl.h"
 typedef enum{
@@ -21,15 +21,18 @@ typedef enum{
 
 class BaseThing{
 public:
-    BaseThing(std::string name, lv_image_dsc_t thing_pic, std::string thing_description, thing_type_e thing_type)
-        : name(name), thing_pic(thing_pic), thing_description(thing_description), thing_type(thing_type) {}
+    BaseThing(std::string name, lv_image_dsc_t thing_pic, std::string thing_description, thing_type_e thing_type, int num = 1)
+        : name(name), thing_pic(thing_pic), thing_description(thing_description), thing_type(thing_type), num_(num) {}
 
     virtual ~BaseThing() = default;
 
     virtual void Use() = 0; // 使用物品
+    int GetNum() const { return num_; }
+    void SetNum(int num) { num_ = num; }
 protected:
     std::string name;
     lv_image_dsc_t thing_pic;
     std::string thing_description; // 使用之后发送给小智
     thing_type_e thing_type;
+    int num_;
 };

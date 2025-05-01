@@ -8,6 +8,18 @@
 #include "stdlib.h"
 #define MOUNT_POINT              "/sdcard"
 #define TAG "ElectronicPetTimer"
+// 
+int ElectronicPet::state_time_change_[E_PET_ACTION_NUMBER][E_PET_STATE_NUMBER] = {
+    /* E_PET_ACTION_IDLE 空闲*/      {0, 0, 0},
+    /* E_PET_ACTION_PLAY 玩耍*/       {0, 0, 10},
+    /* E_PET_ACTION_SLEEP 睡觉*/      {10, 0, 0},
+    /* E_PET_ACTION_WALK 走路*/       {0, 0, 5},
+    /* E_PET_ACTION_BATH 洗澡*/       {0, 0, 5},
+    /* E_PET_ACTION_WORK 工作*/       {0, 0, 0},
+    /* E_PET_ACTION_STUDY 学习*/      {0, 0, 0},
+    /* E_PET_ACTION_PLAY_MUSIC 听歌*/ {0, 0, 5}
+};
+
 ElectronicPetTimer::ElectronicPetTimer() {
     clock_ticks_ = 0;
     esp_timer_create_args_t clock_timer_args = {
@@ -58,9 +70,6 @@ void calculate_next_trigger(
     time_t now;
     time(&now);
     struct tm* current = localtime(&now);
-    printf("Current time: %02d:%02d:%02d %02d/%02d/%04d\n",
-        current->tm_hour, current->tm_min, current->tm_sec,
-        current->tm_mday, current->tm_mon + 1, current->tm_year + 1900);
 
     struct tm next = *current;
 
@@ -116,7 +125,6 @@ void calculate_next_trigger(
         interval = lcm(interval, labs(re_mday) * 86400L);
         has_periodic = 1;
     } else if (!has_periodic &&  re_mday > 0) {
-        printf("Setting day of month: %d\n", re_mday);
         next.tm_mday = re_mday;
     }
 
@@ -159,9 +167,6 @@ void calculate_next_trigger(
     // 计算初始候选时间
     next.tm_isdst = -1;
     time_t candidate = mktime(&next);
-    printf("Next time (local): %02d:%02d:%02d %02d/%02d/%04d\n",
-           next.tm_hour, next.tm_min, next.tm_sec,
-           next.tm_mday, next.tm_mon + 1, next.tm_year + 1900);
     // 自动调整策略
     while (1) {
         // 处理时间已过的情况
@@ -196,6 +201,9 @@ void ElectronicPetTimer::deal_one_csv_message(csv_info_t *csv_info, long *delta_
         csv_info->tm_sec, csv_info->tm_min, csv_info->tm_hour,
         csv_info->re_mday, csv_info->re_mon, csv_info->re_year,
         csv_info->re_wday, delta_sec, interval_sec);
+        if(csv_info->random_l){
+            *delta_sec *= (rand() % (csv_info->random_h - csv_info->random_l + 1)) + csv_info->random_l;
+        }
     
 }
 
@@ -255,6 +263,10 @@ ElectronicPetTimer::~ElectronicPetTimer() {
 void ElectronicPetTimer::OnClockTimer() {
     std::lock_guard<std::mutex> lock(mutex_);
     timer_event_process();
+    if(clock_ticks_ % 60 == 0){
+        ESP_LOGI(TAG, "Clock ticks: %d", clock_ticks_);
+    }
+    clock_ticks_++;
 }
 
 
