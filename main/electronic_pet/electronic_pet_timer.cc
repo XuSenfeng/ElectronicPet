@@ -6,18 +6,19 @@
 #include <stdio.h>
 #include <cstring>
 #include "stdlib.h"
+#include "application.h"
 #define MOUNT_POINT              "/sdcard"
 #define TAG "ElectronicPetTimer"
-// 
+// 精力, 饱食度, 快乐度
 int ElectronicPet::state_time_change_[E_PET_ACTION_NUMBER][E_PET_STATE_NUMBER] = {
-    /* E_PET_ACTION_IDLE 空闲*/      {0, 0, 0},
-    /* E_PET_ACTION_PLAY 玩耍*/       {0, 0, 10},
-    /* E_PET_ACTION_SLEEP 睡觉*/      {10, 0, 0},
-    /* E_PET_ACTION_WALK 走路*/       {0, 0, 5},
-    /* E_PET_ACTION_BATH 洗澡*/       {0, 0, 5},
-    /* E_PET_ACTION_WORK 工作*/       {0, 0, 0},
-    /* E_PET_ACTION_STUDY 学习*/      {0, 0, 0},
-    /* E_PET_ACTION_PLAY_MUSIC 听歌*/ {0, 0, 5}
+    /* E_PET_ACTION_IDLE 空闲*/      {-1, -1, -1},
+    /* E_PET_ACTION_PLAY 玩耍*/       {-3, -3, 3},
+    /* E_PET_ACTION_SLEEP 睡觉*/      {2, -1, 0},
+    /* E_PET_ACTION_WALK 走路*/       {-2, -2, 1},
+    /* E_PET_ACTION_BATH 洗澡*/       {-1, -1, 1},
+    /* E_PET_ACTION_WORK 工作*/       {-4, -2, -4},
+    /* E_PET_ACTION_STUDY 学习*/      {-4, -2, -3},
+    /* E_PET_ACTION_PLAY_MUSIC 听歌*/ {-1, -1, 2}
 };
 
 ElectronicPetTimer::ElectronicPetTimer() {
@@ -263,8 +264,10 @@ ElectronicPetTimer::~ElectronicPetTimer() {
 void ElectronicPetTimer::OnClockTimer() {
     std::lock_guard<std::mutex> lock(mutex_);
     timer_event_process();
-    if(clock_ticks_ % 60 == 0){
+    if(clock_ticks_ % (1000 / CONFIG_FREQUENCE_OF_PET) == 0){
         ESP_LOGI(TAG, "Clock ticks: %d", clock_ticks_);
+        // 更新一下状态
+        ElectronicPet::GetInstance()->change_statue(ElectronicPet::state_time_change_[ElectronicPet::GetInstance()->GetAction()]);
     }
     clock_ticks_++;
 }
@@ -371,6 +374,10 @@ void ElectronicPetTimer::timer_event_process(){
                 it->function.callback(it->function.arg);
             } else {
                 ESP_LOGI(TAG, "Message: %s", it->message);
+                std::string message = it->message;
+                // 发送消息给小智
+                auto &app = Application::GetInstance();
+                app.SendMessage(message);
             }
             if(it->repeat_time > 0){
                 it->trigger_time += it->repeat_time;

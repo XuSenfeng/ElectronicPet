@@ -30,6 +30,9 @@ Display::Display() {
         .callback = [](void *arg) {
             Display *display = static_cast<Display*>(arg);
             DisplayLockGuard lock(display);
+            if (display->notification_label_ == nullptr) {
+                return;
+            }
             lv_obj_add_flag(display->notification_label_, LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(display->status_label_, LV_OBJ_FLAG_HIDDEN);
         },
@@ -275,4 +278,13 @@ void Display::SetTheme(const std::string& theme_name) {
     current_theme_name_ = theme_name;
     Settings settings("display", true);
     settings.SetString("theme", theme_name);
+}
+
+void Display::StateUI() {
+}
+
+void Display::SetupUI() {
+}
+
+void Display::CleanSetupUI(){
 }

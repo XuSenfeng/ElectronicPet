@@ -292,17 +292,97 @@ static void generate_mask(lv_draw_buf_t * mask)
     /*Comment it to make the mask visible*/
     lv_obj_delete(canvas);
 }
+lv_obj_t * screen_main_;
+lv_obj_t * screen_state_;
+lv_obj_t * screen_now_ = nullptr;
+void gusture_event_cb(lv_event_t* e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    auto display = Board::GetInstance().GetDisplay();
+    DisplayLockGuard lock(display);
+    if (code == LV_EVENT_GESTURE) {
+        printf("%s %s", "event_cb", "gesture event");
+        lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
+        if (dir == LV_DIR_TOP) {
+            // display->SetChatMessage("", "gesture event top\n");
+        }
+        else if (dir == LV_DIR_BOTTOM) {
+            // display->SetChatMessage("", "gesture event bottom\n");
+        }
+        else if (dir == LV_DIR_LEFT) {
+            //清空屏幕
+            if(screen_now_ == screen_state_) {
+                lv_obj_add_flag(screen_state_, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(screen_main_, LV_OBJ_FLAG_HIDDEN);
+                screen_now_ = screen_main_;
+            }
+            else if (screen_now_ == screen_main_) {
+                lv_obj_add_flag(screen_main_, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(screen_state_, LV_OBJ_FLAG_HIDDEN);
+                screen_now_ = screen_state_;
+            }
+            // SetChatMessage("", "gesture event left\n", chat_message_label_);
+        }
+        else if (dir == LV_DIR_RIGHT) {
+            if(screen_now_ == screen_state_) {
+                lv_obj_add_flag(screen_state_, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(screen_main_, LV_OBJ_FLAG_HIDDEN);
+                screen_now_ = screen_main_;
+            }
+            else if (screen_now_ == screen_main_) {
+                lv_obj_add_flag(screen_main_, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_clear_flag(screen_state_, LV_OBJ_FLAG_HIDDEN);
+                screen_now_ = screen_state_;
+            }
+            // SetChatMessage("", "gesture event right\n", chat_message_label_);
+        }
+    }
+    if (code == LV_EVENT_CLICKED) {
+
+    }
+}
+
+void LcdDisplay::StateUI(){
+    DisplayLockGuard lock(this);
+
+    screen_state_ = lv_obj_create(lv_scr_act());
+    lv_obj_set_size(screen_state_, LV_HOR_RES, LV_VER_RES);
+    lv_obj_set_style_radius(screen_state_, 0, 0);
+    lv_obj_set_style_bg_color(screen_state_, LIGHT_BACKGROUND_COLOR, 0);
+    lv_obj_set_style_bg_opa(screen_state_, 255, 0);
+    lv_obj_set_style_border_width(screen_state_, 0, 0); // 设置边框宽度为0
+    lv_obj_set_style_pad_all(screen_state_, 0, 0); // 设置内边距为0
+    lv_obj_clear_flag(screen_state_, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(screen_state_, LV_OBJ_FLAG_HIDDEN); // Hide the screen initially
+}
+
 
 void LcdDisplay::SetupUI() {
     DisplayLockGuard lock(this);
+    
+    lv_obj_t * screen = lv_screen_active();
+    lv_obj_add_event_cb(screen, gusture_event_cb, LV_EVENT_GESTURE, screen_main_);
 
-    auto screen = lv_screen_active();
-    lv_obj_set_style_text_font(screen, fonts_.text_font, 0);
-    lv_obj_set_style_text_color(screen, current_theme.text, 0);
-    lv_obj_set_style_bg_color(screen, current_theme.background, 0);
+
+    screen_main_ = lv_obj_create(lv_scr_act());
+    lv_obj_set_style_text_font(screen_main_, fonts_.text_font, 0);
+    lv_obj_set_style_text_color(screen_main_, current_theme.text, 0);
+    lv_obj_set_style_bg_color(screen_main_, current_theme.background, 0);
+    screen_now_ = screen_main_;
+
+    
+    lv_obj_add_flag(screen_main_, LV_OBJ_FLAG_GESTURE_BUBBLE);
+    lv_obj_set_size(screen_main_, LV_HOR_RES, LV_VER_RES);
+    lv_obj_set_style_radius(screen_main_, 0, 0);
+    lv_obj_set_style_bg_color(screen_main_, current_theme.background, 0);
+    lv_obj_set_style_bg_opa(screen_main_, 255, 0);
+    lv_obj_set_style_border_width(screen_main_, 0, 0); // 设置边框宽度为0
+    lv_obj_set_style_pad_all(screen_main_, 0, 0); // 设置内边距为0
+    lv_obj_set_pos(screen_main_, 0, 0); // 设置位置为(0, 0)
+    lv_obj_clear_flag(screen_main_, LV_OBJ_FLAG_SCROLLABLE);
 
     /* Container */
-    container_ = lv_obj_create(screen);
+    container_ = lv_obj_create(screen_main_);
     lv_obj_set_size(container_, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_flex_flow(container_, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_style_pad_all(container_, 0, 0);
@@ -330,6 +410,7 @@ void LcdDisplay::SetupUI() {
 
     lv_obj_set_flex_flow(content_, LV_FLEX_FLOW_COLUMN); // 垂直布局（从上到下）
     lv_obj_set_flex_align(content_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY); // 子对象居中对齐，等距分布
+    lv_obj_clear_flag(content_, LV_OBJ_FLAG_SCROLLABLE);
 
     emotion_label_ = lv_label_create(content_);
     lv_obj_set_style_text_font(emotion_label_, &font_awesome_30_4, 0);
@@ -383,7 +464,7 @@ void LcdDisplay::SetupUI() {
     lv_obj_set_style_text_font(battery_label_, fonts_.icon_font, 0);
     lv_obj_set_style_text_color(battery_label_, current_theme.text, 0);
 
-    low_battery_popup_ = lv_obj_create(screen);
+    low_battery_popup_ = lv_obj_create(screen_main_);
     lv_obj_set_scrollbar_mode(low_battery_popup_, LV_SCROLLBAR_MODE_OFF);
     lv_obj_set_size(low_battery_popup_, LV_HOR_RES * 0.9, fonts_.text_font->line_height * 2);
     lv_obj_align(low_battery_popup_, LV_ALIGN_BOTTOM_MID, 0, 0);
@@ -400,6 +481,8 @@ void LcdDisplay::SetupUI() {
 
     generate_mask(&mask);
     lv_obj_set_style_bitmap_mask_src(chat_message_label_, &mask, 0);
+
+    StateUI();
 }
 
 void LcdDisplay::SetEmotion(const char* emotion) {
@@ -474,7 +557,7 @@ void LcdDisplay::SetTheme(const std::string& theme_name) {
     }
     
     // Get the active screen
-    lv_obj_t* screen = lv_screen_active();
+    lv_obj_t* screen = screen_main_;
     
     // Update the screen colors
     lv_obj_set_style_bg_color(screen, current_theme.background, 0);

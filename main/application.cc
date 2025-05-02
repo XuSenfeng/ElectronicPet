@@ -835,7 +835,6 @@ void Application::SendMessage(const std::string& message) {
     } else if (device_state_ == kDeviceStateListening) {   
         Schedule([this, message]() {
             if (protocol_) {
-                protocol_->CloseAudioChannel();
                 protocol_->SendWakeWordDetected(message); 
             }
         });

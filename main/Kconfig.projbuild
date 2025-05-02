@@ -246,3 +246,9 @@ config USE_REALTIME_CHAT
         需要 ESP32 S3 与 AEC 开启，因为性能不够，不建议和微信聊天界面风格同时开启
         
 endmenu
+
+menu "XvSenfeng Electronic Pet"
+    config FREQUENCE_OF_PET
+        int "宠物交互的频率,数字越大越频繁"
+        default 5
+endmenu

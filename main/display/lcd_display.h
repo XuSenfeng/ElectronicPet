@@ -1,3 +1,9 @@
+/*
+ * @Descripttion: 
+ * @Author: Xvsenfeng helloworldjiao@163.com
+ * @LastEditors: Xvsenfeng helloworldjiao@163.com
+ * Copyright (c) 2025 by helloworldjiao@163.com, All Rights Reserved. 
+ */
 #ifndef LCD_DISPLAY_H
 #define LCD_DISPLAY_H
 
@@ -22,7 +28,6 @@ protected:
 
     DisplayFonts fonts_;
 
-    void SetupUI();
     virtual bool Lock(int timeout_ms = 0) override;
     virtual void Unlock() override;
 
@@ -37,6 +42,8 @@ public:
     virtual void SetIcon(const char* icon) override;
     // Add theme switching function
     virtual void SetTheme(const std::string& theme_name) override;
+    void SetupUI() override;
+    void StateUI() override;
 };
 
 // RGB LCD显示器
