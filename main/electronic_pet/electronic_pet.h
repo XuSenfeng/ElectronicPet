@@ -17,6 +17,7 @@
 #include "electronic_food.h"
 #include "electronic_pet_timer.h"
 #include <vector>
+#include "string.h"
 typedef enum{
     E_PET_ACTION_IDLE = 0, // 空闲
     E_PET_ACTION_PLAY, // 玩耍
@@ -36,11 +37,15 @@ typedef enum{
     E_PET_STATE_NUMBER // 状态数量
 }electronic_pet_state_e;
 
+typedef struct {
+    int value;
+    char name[30];
+}state_t;
 
 class ElectronicPet {
 private:
     std::mutex mutex_;
-    int state_[E_PET_STATE_NUMBER];     // 当前状态
+    state_t state_[E_PET_STATE_NUMBER];     // 当前状态
     
     std::vector<Food> foods_; // 物品列表
     electronic_pet_action_e action_; // 当前行动
@@ -52,8 +57,10 @@ public:
     ~ElectronicPet();
     int GetAction() const { return action_; }
     void SetAction(int action) { action_ = (electronic_pet_action_e)action; }
-    int GetState(int state) const { return state_[state]; }
-    void SetState(int state, int value) { state_[state] = value; }
+    int GetState(int state) const { return state_[state].value; }
+    void SetState(int state, int value) { state_[state].value = value; }
+    void SetStateName(int state, const char* name) { strcpy(state_[state].name, name); }
+    char *GetStateName(int state) { return state_[state].name; }
     static ElectronicPet* GetInstance();
 
     void change_statue(int *change_state);

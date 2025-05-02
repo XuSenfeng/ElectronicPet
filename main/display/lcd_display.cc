@@ -10,6 +10,7 @@
 #include "settings.h"
 
 #include "board.h"
+#include "electronic_pet.h"
 
 #define TAG "LcdDisplay"
 
@@ -300,6 +301,8 @@ void gusture_event_cb(lv_event_t* e)
     lv_event_code_t code = lv_event_get_code(e);
     auto display = Board::GetInstance().GetDisplay();
     DisplayLockGuard lock(display);
+    display->UpdateStateGui(); // 初始化状态显示
+
     if (code == LV_EVENT_GESTURE) {
         printf("%s %s", "event_cb", "gesture event");
         lv_dir_t dir = lv_indev_get_gesture_dir(lv_indev_get_act());
@@ -342,18 +345,86 @@ void gusture_event_cb(lv_event_t* e)
     }
 }
 
+// 添加状态更新函数
+void LcdDisplay::UpdateStateGui() {
+    DisplayLockGuard lock(this);
+    ElectronicPet* pet = ElectronicPet::GetInstance();
+    if(pet == nullptr) {
+        ESP_LOGE(TAG, "ElectronicPet instance is null");
+        return;
+    }
+    for(int i = 0; i < E_PET_STATE_NUMBER; i++) {
+        lv_obj_t* item = state_items[i];
+        // 更新数值显示
+        lv_label_set_text_fmt(lv_obj_get_child(item, 1), 
+                            "%s: %d%%", pet->GetStateName(i), pet->GetState(i));
+        
+        // 更新进度条
+        lv_obj_t* bar = (lv_obj_t*)lv_obj_get_child(item, 2);
+        lv_bar_set_value(bar, pet->GetState(i), LV_ANIM_ON);
+        
+        // 动态颜色（示例：根据数值改变进度条颜色）
+        lv_color_t color = pet->GetState(i) > 30 ? 
+            lv_color_hex(0x0099ff) : lv_color_hex(0xff6699);
+        lv_obj_set_style_bg_color(bar, color, LV_PART_INDICATOR);
+    }
+}
+
 void LcdDisplay::StateUI(){
     DisplayLockGuard lock(this);
-
     screen_state_ = lv_obj_create(lv_scr_act());
     lv_obj_set_size(screen_state_, LV_HOR_RES, LV_VER_RES);
-    lv_obj_set_style_radius(screen_state_, 0, 0);
     lv_obj_set_style_bg_color(screen_state_, LIGHT_BACKGROUND_COLOR, 0);
-    lv_obj_set_style_bg_opa(screen_state_, 255, 0);
-    lv_obj_set_style_border_width(screen_state_, 0, 0); // 设置边框宽度为0
-    lv_obj_set_style_pad_all(screen_state_, 0, 0); // 设置内边距为0
     lv_obj_clear_flag(screen_state_, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_add_flag(screen_state_, LV_OBJ_FLAG_HIDDEN); // Hide the screen initially
+
+    // 创建主容器（垂直布局）
+    lv_obj_t* main_cont = lv_obj_create(screen_state_);
+    lv_obj_set_size(main_cont, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_flow(main_cont, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_style_pad_all(main_cont, 20, 0);
+    lv_obj_set_style_pad_row(main_cont, ITEM_SPACING, 0);
+    lv_obj_remove_style(main_cont, NULL, LV_PART_SCROLLBAR);
+
+    // 创建每个状态项
+    for(int i = 0; i < E_PET_STATE_NUMBER; i++) {
+        // 状态项容器
+        lv_obj_t* item = lv_obj_create(main_cont);
+        lv_obj_set_size(item, LV_PCT(100), ITEM_HEIGHT);
+        lv_obj_set_style_radius(item, 15, 0);
+        lv_obj_set_style_bg_color(item, lv_color_hex(0xFFF3F9), 0);
+        lv_obj_set_style_shadow_width(item, 15, 0);
+        lv_obj_set_style_shadow_color(item, lv_color_hex(0xCCCCCC), 0);
+        lv_obj_remove_style(item, NULL, LV_PART_SCROLLBAR);
+        lv_obj_clear_flag(item, LV_OBJ_FLAG_SCROLLABLE);
+
+        
+        // 图标部分
+        lv_obj_t* icon = lv_label_create(item);
+        // lv_label_set_text(icon, get_state_icon(i)); // 需要实现图标获取函数
+        lv_obj_set_style_text_color(icon, lv_color_hex(0xFF88A4), 0);
+        // lv_obj_set_style_text_font(icon, ICON_FONT, 0);
+        lv_obj_align(icon, LV_ALIGN_LEFT_MID, 15, 0);
+
+        // 状态名称和数值
+        lv_obj_t* name = lv_label_create(item);
+        // lv_label_set_text_fmt(name, "%s: %d%%", pet->GetStateName(i), pet->GetState(i));
+        lv_obj_set_style_text_font(name, fonts_.text_font, 0);
+        lv_obj_align(name, LV_ALIGN_LEFT_MID, ICON_SIZE + 25, -10);
+
+        // 进度条
+        lv_obj_t* bar = lv_bar_create(item);
+        lv_bar_set_range(bar, 0, 100);
+        // lv_bar_set_value(bar, pet->GetState(i), LV_ANIM_ON);
+        lv_obj_set_size(bar, PROGRESS_WIDTH, 15);
+        lv_obj_align(bar, LV_ALIGN_LEFT_MID, ICON_SIZE + 25, 15);
+        lv_obj_set_style_radius(bar, 8, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(bar, lv_color_hex(0xFFE4EB), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(bar, lv_color_hex(0x00facc), LV_PART_INDICATOR);
+        
+        state_items[i] = item; // 保存对象指针方便后续更新
+    }
+
+    lv_obj_add_flag(screen_state_, LV_OBJ_FLAG_HIDDEN);
 }
 
 

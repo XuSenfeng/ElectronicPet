@@ -11,7 +11,7 @@
 #include <esp_timer.h>
 #include <esp_log.h>
 #include <esp_pm.h>
-
+#include "electronic_pet.h"
 #include <string>
 
 struct DisplayFonts {
@@ -36,6 +36,7 @@ public:
     virtual void StateUI();
     virtual void SetupUI();
     virtual void CleanSetupUI();
+    virtual void UpdateStateGui();
 
     inline int width() const { return width_; }
     inline int height() const { return height_; }
@@ -64,6 +65,8 @@ protected:
 
     esp_timer_handle_t notification_timer_ = nullptr;
     esp_timer_handle_t update_timer_ = nullptr;
+    // 状态显示对象数组
+    lv_obj_t* state_items[E_PET_STATE_NUMBER];
 
     friend class DisplayLockGuard;
     virtual bool Lock(int timeout_ms = 0) = 0;

@@ -10,14 +10,20 @@
 #include "settings.h"
 #include "string.h"
 #include "electronic_food.h"
+#include "board.h"
+#include "display/display.h"
 #define TAG "ElectronicPet"
 
 ElectronicPet::ElectronicPet(){
     ESP_LOGI(TAG, "ElectronicPet constructor");
     Settings settings("e_pet", true);
     for(int i = 0; i < E_PET_STATE_NUMBER; i++){
-        state_[i] = settings.GetInt("state_" + std::to_string(i), 100);
+        state_[i].value = settings.GetInt("state_" + std::to_string(i), 100);
     }
+    SetStateName(0, "精力");
+    SetStateName(1, "饱食度");
+    SetStateName(2, "快乐度");
+    printf("state_0 %s: %d, state_1 %s: %d, state_2 %s: %d\n", GetStateName(0), GetState(0), GetStateName(1), GetState(1), GetStateName(2), GetState(2));
     action_ = (electronic_pet_action_e)settings.GetInt("action", E_PET_ACTION_IDLE);
     Food food("food", {0}, "饱食度增加10", 10, 0);
 
@@ -54,13 +60,13 @@ ElectronicPet* ElectronicPet::GetInstance() {
 void ElectronicPet::change_statue(int *change_state){
     std::lock_guard<std::mutex> lock(mutex_);
     for(int i = 0; i < E_PET_STATE_NUMBER; i++){
-        state_[i] += change_state[i];
-        if(state_[i] > 100) state_[i] = 100;
-        if(state_[i] < 0) state_[i] = 0;
+        state_[i].value += change_state[i];
+        if(state_[i].value > 100) state_[i].value = 100;
+        if(state_[i].value < 0) state_[i].value = 0;
     }
     Settings settings("e_pet", true);
     for(int i = 0; i < E_PET_STATE_NUMBER; i++){
-        settings.SetInt("state_" + std::to_string(i), state_[i]);
+        settings.SetInt("state_" + std::to_string(i), state_[i].value);
     }
 }
 

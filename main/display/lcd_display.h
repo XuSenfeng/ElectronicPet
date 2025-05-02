@@ -44,6 +44,7 @@ public:
     virtual void SetTheme(const std::string& theme_name) override;
     void SetupUI() override;
     void StateUI() override;
+    void UpdateStateGui() override;
 };
 
 // RGB LCD显示器
@@ -90,4 +91,11 @@ public:
                       bool mirror_x, bool mirror_y, bool swap_xy,
                       DisplayFonts fonts);
 };
+
+#define ITEM_SPACING        15
+#define ITEM_HEIGHT         80
+#define ITEM_WIDTH          (LV_HOR_RES - 2*20)
+#define ICON_SIZE           48
+#define PROGRESS_WIDTH      150
+
 #endif // LCD_DISPLAY_H

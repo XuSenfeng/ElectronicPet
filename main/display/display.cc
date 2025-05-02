@@ -288,3 +288,5 @@ void Display::SetupUI() {
 
 void Display::CleanSetupUI(){
 }
+
+void Display::UpdateStateGui(){};

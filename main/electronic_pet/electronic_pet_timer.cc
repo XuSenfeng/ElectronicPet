@@ -175,7 +175,6 @@ void calculate_next_trigger(
             // printf("Candidate time has passed, adjusting...\n");
             if (has_periodic) {
                 candidate += interval;
-                printf("Adjusted candidate time: %lld %lld\n", candidate, now);
             } else {
                 // 单次事件已过期
                 *delta_sec = -1;
@@ -188,10 +187,10 @@ void calculate_next_trigger(
     }
 
     struct tm* candidate_tm = localtime(&candidate);
-    // 处理时区差异
-    printf("Candidate time (local): %02d:%02d:%02d %02d/%02d/%04d  day:%ld\n hour: %ld, min: %ld, sec: %ld\n",
-           candidate_tm->tm_hour, candidate_tm->tm_min, candidate_tm->tm_sec,
-           candidate_tm->tm_mday, candidate_tm->tm_mon + 1, candidate_tm->tm_year + 1900, interval / 60 /60 / 24, interval / 60 /60, interval / 60, interval);
+    // // 处理时区差异
+    // printf("Candidate time (local): %02d:%02d:%02d %02d/%02d/%04d  day:%ld\n hour: %ld, min: %ld, sec: %ld\n",
+    //        candidate_tm->tm_hour, candidate_tm->tm_min, candidate_tm->tm_sec,
+    //        candidate_tm->tm_mday, candidate_tm->tm_mon + 1, candidate_tm->tm_year + 1900, interval / 60 /60 / 24, interval / 60 /60, interval / 60, interval);
 
     *delta_sec = candidate - now;
     *interval_sec = has_periodic ? interval : 0;
